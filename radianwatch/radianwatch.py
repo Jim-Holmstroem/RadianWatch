@@ -6,7 +6,7 @@ import itertools as it
 import functools as ft
 import re
 from tempfile import NamedTemporaryFile
-from subprocess import Popen
+from subprocess import Popen, PIPE, STDOUT
 import os
 import BaseHTTPServer as httpserver
 
@@ -31,15 +31,29 @@ remove_loneones = ft.partial( #removes 1\pi which just looks silly, could have f
     r"\\frac{\pi}"
 )
 
-png_render = lambda filename: Popen(
-    [
-        "latex2png", 
-        "-g", 
-        "-d", 
-        "12800",
-        str(filename)
-    ],
-)
+def png_render(filename):
+    proc=Popen(
+        [
+            "latex2png", 
+            "-g", 
+            "-d", 
+            "12800",
+            str(filename)
+        ],
+        stdout=PIPE,
+        stderr=PIPE,
+        cwd='/tmp'
+    )
+    proc.wait()
+    stdout, stderr = proc.communicate()
+    print(stdout)
+    get_png_filename = lambda filename: open(filename.replace('.tex','.png')) 
+    #that is how latex2png works, didn't find workaround to specify the outputfile (another tempfile)
+    png_file = get_png_filename(filename)
+    png_data = png_file.read()
+    png_file.close()
+    os.remove(png_file.name)
+    return "" #png_data
 
 def latex2png(equation):
     with NamedTemporaryFile(suffix='.tex', delete=False) as f:
@@ -54,11 +68,7 @@ def latex2png(equation):
             )
         )
         f.file.write(latex_code)
-        png_render(f.name)
-        png_file = open(f.name.replace('.tex','.png'))) #that is how latex2png works, didn't find workaround to specify the outputfile (another tempfile)
-        png_data = png_file.read()
-        png_file.close()
-        os.remove(png_file.name)
+        png_data = png_render(f.name)
     return png_data
 
 time = datetime.time(datetime.now())
@@ -78,8 +88,6 @@ class Handler(httpserver.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'image/png')
         self.end_headers()
-
-
 
 
 
