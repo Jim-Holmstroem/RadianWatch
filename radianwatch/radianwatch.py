@@ -4,7 +4,7 @@ from datetime import datetime
 from sympy import *
 import itertools as it
 import functools as ft
-from subprocess import call
+from subprocess import call, check_call
 import re
 from tempfile import NamedTemporaryFile
 
@@ -22,11 +22,14 @@ prettier_radians = ft.partial( #\frac{x}{y}pi -> \frac{xpi}{y}
     r"\\frac{\g<m>\pi}{\g<n>}"
 )
 
-png_render = ft.partial(
-    call,
-    "latex2png",
-    "-g",
-    "-d 12800"
+png_render = lambda filename: check_call(
+    [
+        "latex2png",
+        "-g",
+        "-d",
+        "12800",
+        filename
+    ]
 )
 
 def latex2png(equation):
@@ -40,7 +43,7 @@ def latex2png(equation):
             )
         )
         f.file.write(latex_code)
-        png_render(f.name)
+        print(png_render(f.name))
         print(f.name.replace('.tex','.png')) #that is how latex2png works
     return latex_code 
 
