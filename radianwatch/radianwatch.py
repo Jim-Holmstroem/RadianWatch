@@ -55,13 +55,15 @@ def png_render(latex_code): #perhaps race conditions, shouldn't be any security 
     png_file.close()
     return png_data
 
-def latex2png(equation):
+def symtime2png(equation):
     latex_code = latex_template(
-        equation=remove_loneones(
-            prettier_radians(
-                latex(
-                    equation,
-                    mode='inline'
+        equation="t = {time}".format(
+            time=remove_loneones(
+                prettier_radians(
+                    latex(
+                        equation,
+                        mode='inline'
+                    )
                 )
             )
         )
@@ -87,7 +89,7 @@ class Handler(httpserver.BaseHTTPRequestHandler):
         time = datetime.time(
             datetime.now()
         )
-        png_data = latex2png(
+        png_data = symtime2png(
             equation=(
                 2*((3-time.hour)%24)*pi/12, #\in [0,4pi]
                 2*((15-time.minute)%60)*pi/60, #\in [0,2pi]
